@@ -381,6 +381,14 @@ TTEND2:
                 movem.l (%SP)+,%D0-%D4/%A0-%A6
 		rts
 
+GETTIM:
+                movem.l %d5, -(%sp)
+		move.l %d4, %d5
+		divu.w #10000, %d4
+		andi   #0x00ff, %d4  |商をget
+		divu.w #0x10, %d4 |divu.wの挙動を明日確認
+
+
 ******************************
 ** COMPARE_INTERPUT:	タイマ用のハードウェア割り込みインターフェース
 ******************************
