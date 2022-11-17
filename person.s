@@ -51,7 +51,7 @@
 .equ SYSCALL_NUM_PUTSTRING,    2
 .equ SYSCALL_NUM_RESET_TIMER,  3
 .equ SYSCALL_NUM_SET_TIMER,    4
-.equ SYSCALL_NUN_GET_TIMER,    5
+.equ SYSCALL_NUM_GET_TIMER,    5
 
 ***************************************************************
 ** 初期化
@@ -217,11 +217,11 @@ WAIT2:
                 bne WAIT2             
 
 
-                lea.l DATA3, %a6         |a6 比較アドレスをDAtA2の先頭にセット
+                lea.l DATA3, %a6         |a6 比較アドレスをDAtA3の先頭にセット
                 add #2, %a6              |先頭の\n\rの2バイト分アドレス移動
-                move.l #3, %d7 |d7 = 2   |d7 <= 3
+                move.l #3, %d7           |d7 <= 3
 
-                **次の文字"sushi"を表示
+                **次の文字"wonderful"を表示
                 move.l #SYSCALL_NUM_PUTSTRING, %D0
 		move.l #0,    %D1         | ch = 0
 		move.l #DATA3,%D2         | p  = #DATA3
@@ -253,12 +253,95 @@ END_CNT2:
                 
                 
 
-CHANGE3:
+CHANGE3:        cmp  #3, %d7             |d7 = 3なら3回めの変更, d7>3以降はCHANGE4に分岐
+                bne  CHANGE4
                 
 WAIT3:
                 cmp #0x01, %d5
                 bne WAIT3
-  
+                lea.l DATA4, %a6         |a6 比較アドレスをDAtA4の先頭にセット
+                add #2, %a6              |先頭の\n\rの2バイト分アドレス移動
+                move.l #4, %d7           |d7 <- 4
+
+                **次の文字"corporation"を表示
+                move.l #SYSCALL_NUM_PUTSTRING, %D0
+		move.l #0,    %D1         | ch = 0
+		move.l #DATA4,%D2         | p  = #DATA4
+                move.l #15,    %d3         | size = 15(corporation+4)
+                trap #0
+
+                **システムコールによるRESET_TIMERの起動
+		move.l #SYSCALL_NUM_RESET_TIMER, %D0
+		trap   #0
+               
+                /* ------------- 空ループ-------------- */
+		move.l #0, %d6
+CNT_LOOPx:
+		cmpi.l #500, %d6
+		beq    END_CNTx
+		addi.l #1, %d6
+		bra    CNT_LOOPx
+END_CNTx:
+                 /* ------------------------------------ */ 
+                **システムコールによるSET_TIMERの起動
+		move.l #SYSCALL_NUM_SET_TIMER, %D0
+		move.w #50000, %D1
+		move.l #TT1,    %D2
+		trap   #0 
+                move.l #0, %d5
+
+                bra LOOP
+ 
+CHANGE4: 
+                cmp  #4, %d7             |d7 = 4なら4回めの変更, d7>4以降はCHANGE5に分岐
+                bne  CHANGE5
+WAIT4:
+                cmp #0x01, %d5
+                bne WAIT4
+
+
+                lea.l DATA5, %a6         |a6 比較アドレスをDAtA5の先頭にセット
+                add #2, %a6              |先頭の\n\rの2バイト分アドレス移動
+                move.l #5, %d7           |d7 <- 5
+                
+                
+                **次の文字""を表示
+                move.l #SYSCALL_NUM_PUTSTRING, %D0
+		move.l #0,    %D1         | ch = 0
+		move.l #DATA5,%D2         | p  = #DATA5
+                move.l #64,    %d3         | size = 15(corporation+4)
+                trap #0
+
+                **システムコールによるRESET_TIMERの起動
+		move.l #SYSCALL_NUM_RESET_TIMER, %D0
+		trap   #0
+               
+                /* ------------- 空ループ-------------- */
+		move.l #0, %d6
+CNT_LOOPy:
+		cmpi.l #500, %d6
+		beq    END_CNTy
+		addi.l #1, %d6
+		bra    CNT_LOOPy
+END_CNTy:
+                 /* ------------------------------------ */ 
+                **システムコールによるSET_TIMERの起動
+		move.l #SYSCALL_NUM_SET_TIMER, %D0
+		move.w #65000, %D1
+		move.l #TT2,    %D2
+		trap   #0 
+                move.l #0, %d5
+
+                bra LOOP
+
+
+CHANGE5:
+
+WAIT5:
+                cmp #0x01, %d5
+                bne WAIT5
+
+
                 **正誤数を表示
                 **"collect"を表示
                 move.l #SYSCALL_NUM_PUTSTRING, %D0
@@ -363,11 +446,6 @@ TT1: |ここでfailedと表示するようにする
                 cmp  #0x11, %d5           | d5 == 11ならfailed処理をせずに終了
                 beq  TTEND1
                 
-                *move.l #SYSCALL_NUM_PUTSTRING, %D0
-		*move.l #0,    %D1         | ch = 0
-		*move.l #END,%D2         | p  = #BUF
-                *move.l #8,    %d3         | size = 8(failed)
-		*trap   #0 
                 add.b   #1, err
                 bra    TTEND2
                 
@@ -375,19 +453,43 @@ TT1: |ここでfailedと表示するようにする
 		
 TTEND1:
 		add.b   #1, col
+                
                  
 TTEND2:
-                move.l #0x01, %d5 | TT1処理を終えたらd6 <= 1
+                
+                move.l #0x01, %d5 | TT1処理を終えたらd6 <- 1
+
                 movem.l (%SP)+,%D0-%D4/%A0-%A6
 		rts
 
-GETTIM:
-                movem.l %d5, -(%sp)
-		move.l %d4, %d5
-		divu.w #10000, %d4
-		andi   #0x00ff, %d4  |商をget
-		divu.w #0x10, %d4 |divu.wの挙動を明日確認
 
+TT2:            
+                movem.l %D0-%D4/%D7/%A0-%A6,-(%SP)
+                cmp  #0x11, %d5           | d5 == 11ならfailed処理をせずに終了
+                beq  TT2END1
+                move.b roop , %d7
+                cmp  #4, %d7
+                beq  TT2END2
+                bra  TT2END3
+TT2END1:
+		add.b   #1, col
+                bra TT2END4
+
+TT2END2:
+                move.b #'2', LED6
+ 
+                add.b   #1, err
+                bra TT2END4
+TT2END3:
+                add.b   #1, roop
+                move.b #'1', LED7
+                bra     TT2END5
+
+TT2END4:
+                move.l #0x01, %d5 | TT1処理を終えたらd6 <- 1
+TT2END5:
+                movem.l (%SP)+,%D0-%D4/%D7/%A0-%A6
+		rts
 
 ******************************
 ** COMPARE_INTERPUT:	タイマ用のハードウェア割り込みインターフェース
@@ -765,6 +867,11 @@ DATA2:
 DATA3:          .ascii "\r\nwonderful\n\r"
                 .even
 
+DATA4:          .ascii "\r\ncorporation\n\r"
+                .even
+
+DATA5:          .ascii "\r\nsentochihironokamikakushihaziburinonakanomeisakunohitotudesu\n\r"
+
 COLL:           .ascii "\r\ncollect "
                 .even
 
@@ -775,17 +882,7 @@ ERR:            .ascii "\r\nerror "
 KAI:            .ascii "\r\n"
                 .even
 
-COL0:           .ascii "\n\rcollect 0 error 3\n\r"
-                .even
 
-COL1:           .ascii "\n\rcollect 1 error 2\n\r"
-                .even
-
-COL2:           .ascii "\n\rcollect 2 error 1\n\r"
-                .even
-
-COL3:           .ascii "\n\rcollect 3 error 0\n\r"
-                .even
 
 END:          
                 .ascii "\n\rfailed"
@@ -835,6 +932,9 @@ col:
                 .even
 
 err:            .ds.b 1
+                .even
+
+roop:           .ds.b 1
                 .even
 
 .end
