@@ -171,7 +171,7 @@ CHANGE1:
                 cmp  #1, %d7   |d7 = 1なら1回目の変更, d7>1以降はCHANGE2に分岐          
                 bne  CHANGE2
 WAIT1:
-                cmp #0x01, %d5
+                cmp #0x01, %d5 |タイマ割り込みが終了するまで待機
                 bne WAIT1
 
                 lea.l DATA2, %a6         |a6 比較アドレスをDAtA2の先頭にセット
@@ -213,7 +213,7 @@ CHANGE2:
                 cmp  #2, %d7             |d7 = 2なら2回めの変更, d7>2以降はCHANGE3に分岐
                 bne  CHANGE3
 WAIT2:
-                cmp #0x01, %d5
+                cmp #0x01, %d5　　　　　　　　　　　　　　　　　　　　　　　|タイマ割り込みが終了するまで待機
                 bne WAIT2             
 
 
@@ -257,8 +257,9 @@ CHANGE3:        cmp  #3, %d7             |d7 = 3なら3回めの変更, d7>3以�
                 bne  CHANGE4
                 
 WAIT3:
-                cmp #0x01, %d5
+                cmp #0x01, %d5　　　　　　　　　　　　　　　　　　　　　　　|タイマ割り込みが終了するまで待機
                 bne WAIT3
+		
                 lea.l DATA4, %a6         |a6 比較アドレスをDAtA4の先頭にセット
                 add #2, %a6              |先頭の\n\rの2バイト分アドレス移動
                 move.l #4, %d7           |d7 <- 4
@@ -296,7 +297,7 @@ CHANGE4:
                 cmp  #4, %d7             |d7 = 4なら4回めの変更, d7>4以降はCHANGE5に分岐
                 bne  CHANGE5
 WAIT4:
-                cmp #0x01, %d5
+                cmp #0x01, %d5　　　　　　　　　　　　　　　　　　　　　　　|タイマ割り込みが終了するまで待機
                 bne WAIT4
 
 
@@ -309,7 +310,7 @@ WAIT4:
                 move.l #SYSCALL_NUM_PUTSTRING, %D0
 		move.l #0,    %D1         | ch = 0
 		move.l #DATA5,%D2         | p  = #DATA5
-                move.l #64,    %d3         | size = 15(corporation+4)
+                move.l #64,    %d3         | size = 64
                 trap #0
 
                 **システムコールによるRESET_TIMERの起動
@@ -338,11 +339,13 @@ END_CNTy:
 CHANGE5:
 
 WAIT5:
-                cmp #0x01, %d5
+                cmp #0x01, %d5　　　　　　　　　　　　　　|タイマ割り込みが終了するまで待機
                 bne WAIT5
 
+******************************
+**正誤数を表示
+******************************
 
-                **正誤数を表示
                 **"collect"を表示
                 move.l #SYSCALL_NUM_PUTSTRING, %D0
 	        move.l #0,    %D1         | ch = 0
@@ -362,7 +365,7 @@ END_CNT3:
                 move.b col, %d7
                 add.b #0x30, %d7
                 move.b %d7, col
-                **正解数
+                **正解数表示
                 move.l #SYSCALL_NUM_PUTSTRING, %D0
 	        move.l #0,    %D1         | ch = 0
 	        move.l #col,%D2         | p  = #col
@@ -380,7 +383,7 @@ END_CNT4:
 /* ------------------------------------ */
                
  
-**"error"を表示
+　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　**"error"を表示
                 move.l #SYSCALL_NUM_PUTSTRING, %D0
 	        move.l #0,    %D1         | ch = 0
 	        move.l #ERR,%D2         | p  = #col
@@ -399,7 +402,7 @@ END_CNT6:
                 move.b err, %d7
                 add.b #0x30, %d7
                 move.b %d7, err
-                **正解数
+                **誤り数を表示
                 move.l #SYSCALL_NUM_PUTSTRING, %D0
 	        move.l #0,    %D1         | ch = 0
 	        move.l #err,%D2         | p  = #col
@@ -421,38 +424,28 @@ END_CNT7:
 	        move.l #KAI,%D2         | p  = #col
                 move.l #2,    %d3         | size = 2
                 trap #0                
-                
-
-                
-
-
-               
-                
-                
 
 LOOP2:
 
                 bra LOOP2                
 
-                
-
-
-		
+                		
 ******************************
-
+**タイマ割り込み1
+**col -> 正解数, err ->誤り数
 ******************************
-TT1: |ここでfailedと表示するようにする
+TT1: |
 		movem.l %D0-%D4/%A0-%A6,-(%SP)
-                cmp  #0x11, %d5           | d5 == 11ならfailed処理をせずに終了
+                cmp  #0x11, %d5           | d5 == 11ならcollect処理をして終了
                 beq  TTEND1
                 
-                add.b   #1, err
+                add.b   #1, err           |err = err+1
                 bra    TTEND2
                 
                 
 		
 TTEND1:
-		add.b   #1, col
+		add.b   #1, col           |col = col+1
                 
                  
 TTEND2:
@@ -461,28 +454,30 @@ TTEND2:
 
                 movem.l (%SP)+,%D0-%D4/%A0-%A6
 		rts
-
+		
+******************************
+**タイマ割り込み2
+**roop -> タイマ割り込みを何回起こすか
+**col -> 正解数, err ->誤り数
+******************************
 
 TT2:            
                 movem.l %D0-%D4/%D7/%A0-%A6,-(%SP)
-                cmp  #0x11, %d5           | d5 == 11ならfailed処理をせずに終了
-                beq  TT2END1
+                cmp  #0x11, %d5           | d5 == 11ならcollect処理をして終了
+		beq  TT2END1
                 move.b roop , %d7
-                cmp  #4, %d7
+                cmp  #4, %d7              |roop == 4ならerror処理をして終了
                 beq  TT2END2
                 bra  TT2END3
 TT2END1:
-		add.b   #1, col
+		add.b   #1, col     |col = col+1
                 bra TT2END4
 
 TT2END2:
-                move.b #'2', LED6
- 
-                add.b   #1, err
+                add.b   #1, err     |err = err+1
                 bra TT2END4
 TT2END3:
-                add.b   #1, roop
-                move.b #'1', LED7
+                add.b   #1, roop |roop = roop+1
                 bra     TT2END5
 
 TT2END4:
