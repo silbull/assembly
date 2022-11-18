@@ -116,7 +116,7 @@ MAIN:
 		trap   #0 
 		
 ******************************
-最初の文字列表示
+**最初の文字列表示
 ******************************
                 move.l #0, %d4   |d4を０で初期化
                 lea.l DATA1, %a6 | a6 -> 比較アドレスをDATA1の先頭にセット
@@ -207,7 +207,7 @@ CHANGE2:
                 cmp  #2, %d7             |d7 = 2なら2回めの変更, d7>2以降はCHANGE3に分岐
                 bne  CHANGE3
 WAIT2:
-                cmp #0x01, %d5　　　　　　　　　　　　　　　　　　　　　　　|タイマ割り込みが終了するまで待機
+                cmp #0x01, %d5|タイマ割り込みが終了するまで待機
                 bne WAIT2             
 
 
@@ -251,7 +251,7 @@ CHANGE3:        cmp  #3, %d7             |d7 = 3なら3回めの変更, d7>3以�
                 bne  CHANGE4
                 
 WAIT3:
-                cmp #0x01, %d5　　　　　　　　　　　　　　　　　　　　　　　|タイマ割り込みが終了するまで待機
+                cmp #0x01, %d5|タイマ割り込みが終了するまで待機
                 bne WAIT3
 		
                 lea.l DATA4, %a6         |a6 比較アドレスをDAtA4の先頭にセット
@@ -291,7 +291,7 @@ CHANGE4:
                 cmp  #4, %d7             |d7 = 4なら4回めの変更, d7>4以降はCHANGE5に分岐
                 bne  CHANGE5
 WAIT4:
-                cmp #0x01, %d5　　　　　　　　　　　　　　　　　　　　　　　|タイマ割り込みが終了するまで待機
+                cmp #0x01, %d5|タイマ割り込みが終了するまで待機
                 bne WAIT4
 
 
@@ -333,11 +333,11 @@ END_CNTy:
 CHANGE5:
 
 WAIT5:
-                cmp #0x01, %d5　　　　　　　　　　　　　　|タイマ割り込みが終了するまで待機
+                cmp #0x01, %d5|タイマ割り込みが終了するまで待機
                 bne WAIT5
 
-　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　jsr RESULT           |結果を表示   
-				 
+                jsr RESULT           |結果を表示   
+
 LOOP2:
 
                 bra LOOP2
@@ -346,22 +346,22 @@ LOOP2:
 		
 ******************************
 **RESULT
-正誤数を表示
+**正誤数を表示
 ******************************
 RESULT:
                 **"collect"を表示
                 move.l #SYSCALL_NUM_PUTSTRING, %D0
-	        move.l #0,    %D1         | ch = 0
-	        move.l #COLL,%D2         | p  = #col
+	            move.l #0,    %D1         | ch = 0
+	            move.l #COLL,%D2         | p  = #col
                 move.l #10,    %d3         | size = 10
                 trap #0
 /* ------------- 空ループ-------------- */
-		move.l #0, %d6
+		        move.l #0, %d6
 CNT_LOOP3:
-		cmpi.l #500, %d6
-		beq    END_CNT3
-		addi.l #1, %d6
-		bra    CNT_LOOP3
+		        cmpi.l #500, %d6
+		        beq    END_CNT3
+				addi.l #1, %d6
+				bra    CNT_LOOP3
 END_CNT3:
 /* ------------------------------------ */ 
 
@@ -370,35 +370,34 @@ END_CNT3:
                 move.b %d7, col
                 **正解数表示
                 move.l #SYSCALL_NUM_PUTSTRING, %D0
-	        move.l #0,    %D1         | ch = 0
-	        move.l #col,%D2         | p  = #col
+	        	move.l #0,    %D1         | ch = 0
+	        	move.l #col,%D2         | p  = #col
                 move.l #1,    %d3         | size = 1
                 trap #0
 
  /* ------------- 空ループ-------------- */
-		move.l #0, %d6
+				move.l #0, %d6
 CNT_LOOP4:
-		cmpi.l #500, %d6
-		beq    END_CNT4
-		addi.l #1, %d6
-		bra    CNT_LOOP4
+				cmpi.l #500, %d6
+				beq    END_CNT4
+				addi.l #1, %d6
+				bra    CNT_LOOP4
 END_CNT4:
 /* ------------------------------------ */
-               
- 
-　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　**"error"を表示
+
+				**"error"を表示
                 move.l #SYSCALL_NUM_PUTSTRING, %D0
-	        move.l #0,    %D1         | ch = 0
-	        move.l #ERR,%D2         | p  = #col
+	        	move.l #0,    %D1         | ch = 0
+	        	move.l #ERR,%D2         | p  = #col
                 move.l #8,    %d3         | size = 8
                 trap #0
 /* ------------- 空ループ-------------- */
-		move.l #0, %d6
+				move.l #0, %d6
 CNT_LOOP6:
-		cmpi.l #500, %d6
-		beq    END_CNT6
-		addi.l #1, %d6
-		bra    CNT_LOOP6
+				cmpi.l #500, %d6
+				beq    END_CNT6
+				addi.l #1, %d6
+				bra    CNT_LOOP6
 END_CNT6:
 /* ------------------------------------ */ 
 
@@ -407,29 +406,29 @@ END_CNT6:
                 move.b %d7, err
                 **誤り数を表示
                 move.l #SYSCALL_NUM_PUTSTRING, %D0
-	        move.l #0,    %D1         | ch = 0
-	        move.l #err,%D2         | p  = #col
+	        	move.l #0,    %D1         | ch = 0
+	        	move.l #err,%D2         | p  = #col
                 move.l #1,    %d3         | size = 1
                 trap #0
 
  /* ------------- 空ループ-------------- */
-		move.l #0, %d6
+				move.l #0, %d6
 CNT_LOOP7:
-		cmpi.l #500, %d6
-		beq    END_CNT7
-		addi.l #1, %d6
-		bra    CNT_LOOP7
+				cmpi.l #500, %d6
+				beq    END_CNT7
+				addi.l #1, %d6
+				bra    CNT_LOOP7
 END_CNT7:
 /* ------------------------------------ */
                 **改行               
                 move.l #SYSCALL_NUM_PUTSTRING, %D0
-	        move.l #0,    %D1         | ch = 0
-	        move.l #KAI,%D2         | p  = #col
+	        	move.l #0,    %D1         | ch = 0
+	        	move.l #KAI,%D2         | p  = #col
                 move.l #2,    %d3         | size = 2
                 trap #0 
 		
 		
-		rts
+				rts
 
               
 
