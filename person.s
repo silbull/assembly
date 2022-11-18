@@ -116,8 +116,7 @@ MAIN:
 		trap   #0 
 		
 ******************************
-* sys_GETSTRING, sys_PUTSTRINGのテスト
-*ターミナルの入力をエコーバックする
+最初の文字列表示
 ******************************
                 move.l #0, %d4   |d4を０で初期化
                 lea.l DATA1, %a6 | a6 -> 比較アドレスをDATA1の先頭にセット
@@ -159,13 +158,8 @@ END_CNT:
                 bra LOOP
 
 COLCT1:
-                move.l #0x11, %d5
-                move.l #SYSCALL_NUM_GET_TIMER, %D0       |成功タイマ保持
-                trap #0
-                bra CHANGE1
-ERROR1:
-                move.l #SYSCALL_NUM_GET_TIMER, %D0        |失敗タイマ保持
-                trap #0
+                move.l #0x11, %d5                        |成功フラグを設定
+                bra CHANGE1                              |
 
 CHANGE1:
                 cmp  #1, %d7   |d7 = 1なら1回目の変更, d7>1以降はCHANGE2に分岐          
@@ -342,10 +336,19 @@ WAIT5:
                 cmp #0x01, %d5　　　　　　　　　　　　　　|タイマ割り込みが終了するまで待機
                 bne WAIT5
 
-******************************
-**正誤数を表示
-******************************
+　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　jsr RESULT           |結果を表示   
+				 
+LOOP2:
 
+                bra LOOP2
+		
+		
+		
+******************************
+**RESULT
+正誤数を表示
+******************************
+RESULT:
                 **"collect"を表示
                 move.l #SYSCALL_NUM_PUTSTRING, %D0
 	        move.l #0,    %D1         | ch = 0
@@ -423,11 +426,12 @@ END_CNT7:
 	        move.l #0,    %D1         | ch = 0
 	        move.l #KAI,%D2         | p  = #col
                 move.l #2,    %d3         | size = 2
-                trap #0                
+                trap #0 
+		
+		
+		rts
 
-LOOP2:
-
-                bra LOOP2                
+              
 
                 		
 ******************************
@@ -466,7 +470,7 @@ TT2:
                 cmp  #0x11, %d5           | d5 == 11ならcollect処理をして終了
 		beq  TT2END1
                 move.b roop , %d7
-                cmp  #4, %d7              |roop == 4ならerror処理をして終了
+                cmp  #3, %d7              |roop == 3ならerror処理をして終了
                 beq  TT2END2
                 bra  TT2END3
 TT2END1:
